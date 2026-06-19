@@ -1,0 +1,1468 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+backend/main.py
+backend/requirements.txt
+frontend/.gitignore
+frontend/eslint.config.mjs
+frontend/next.config.ts
+frontend/package.json
+frontend/postcss.config.mjs
+frontend/public/file.svg
+frontend/public/globe.svg
+frontend/public/next.svg
+frontend/public/vercel.svg
+frontend/public/window.svg
+frontend/README.md
+frontend/src/app/favicon.ico
+frontend/src/app/globals.css
+frontend/src/app/layout.tsx
+frontend/src/app/page.tsx
+frontend/src/components/MiningMap.tsx
+frontend/tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="backend/main.py">
+import os
+from fastapi import FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
+import pandas as pd
+import json
+
+app = FastAPI(title="Bitcoin Mining Concentration Map API")
+
+# Enable CORS for Next.js frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Coordinates and details for major mining sites/hubs
+MINING_HUBS = [
+    {
+        "id": "hub-us-texas",
+        "name": "Texas ERCOT Hub",
+        "country": "United States",
+        "region": "Texas",
+        "lat": 31.9686,
+        "lon": -99.9018,
+        "hashrate_share": 28.5,
+        "power_capacity_mw": 850,
+        "energy_type": "Wind/Solar/Gas",
+        "renewable_percentage": 42.0,
+        "grid_intensity": 380,
+        "status": "Active",
+        "institutional_control": "Riot Platforms, Marathon Digital, Core Scientific"
+    },
+    {
+        "id": "hub-us-georgia",
+        "name": "Georgia Industrial Cluster",
+        "country": "United States",
+        "region": "Georgia",
+        "lat": 32.1656,
+        "lon": -82.9001,
+        "hashrate_share": 6.8,
+        "power_capacity_mw": 240,
+        "energy_type": "Nuclear/Coal/Gas",
+        "renewable_percentage": 25.0,
+        "grid_intensity": 410,
+        "status": "Active",
+        "institutional_control": "CleanSpark, Terawulf"
+    },
+    {
+        "id": "hub-kz-ekibastuz",
+        "name": "Ekibastuz Coal Basin Hub",
+        "country": "Kazakhstan",
+        "region": "Ekibastuz",
+        "lat": 51.7297,
+        "lon": 75.3266,
+        "hashrate_share": 11.2,
+        "power_capacity_mw": 450,
+        "energy_type": "Coal",
+        "renewable_percentage": 2.0,
+        "grid_intensity": 880,
+        "status": "Restricted",
+        "institutional_control": "Local Grid Operators & private consortiums"
+    },
+    {
+        "id": "hub-cn-sichuan",
+        "name": "Sichuan Hydro-Mining Hub",
+        "country": "China",
+        "region": "Sichuan",
+        "lat": 30.6570,
+        "lon": 104.0658,
+        "hashrate_share": 9.5,
+        "power_capacity_mw": 380,
+        "energy_type": "Hydro",
+        "renewable_percentage": 92.0,
+        "grid_intensity": 75,
+        "status": "Underground",
+        "institutional_control": "Private domestic pools & independent miners"
+    },
+    {
+        "id": "hub-ru-bratsk",
+        "name": "Bratsk Hydro Hub",
+        "country": "Russia",
+        "region": "Siberia",
+        "lat": 56.1322,
+        "lon": 101.6142,
+        "hashrate_share": 8.0,
+        "power_capacity_mw": 320,
+        "energy_type": "Hydro",
+        "renewable_percentage": 85.0,
+        "grid_intensity": 90,
+        "status": "Active",
+        "institutional_control": "BitRiver"
+    },
+    {
+        "id": "hub-is-reykjavik",
+        "name": "Icelandic Geothermal Sites",
+        "country": "Iceland",
+        "region": "Reykjanes",
+        "lat": 64.1466,
+        "lon": -21.9426,
+        "hashrate_share": 2.1,
+        "power_capacity_mw": 90,
+        "energy_type": "Geothermal/Hydro",
+        "renewable_percentage": 100.0,
+        "grid_intensity": 0,
+        "status": "Active",
+        "institutional_control": "Genesis Mining, Hive Digital"
+    },
+    {
+        "id": "hub-ca-quebec",
+        "name": "Quebec Hydro Grid Hub",
+        "country": "Canada",
+        "region": "Quebec",
+        "lat": 52.9399,
+        "lon": -73.5491,
+        "hashrate_share": 3.4,
+        "power_capacity_mw": 140,
+        "energy_type": "Hydro",
+        "renewable_percentage": 99.0,
+        "grid_intensity": 5,
+        "status": "Active",
+        "institutional_control": "Bitfarms, Hut 8"
+    },
+    {
+        "id": "hub-py-itaipu",
+        "name": "Itaipu Dam Hub",
+        "country": "Paraguay",
+        "region": "Ciudad del Este",
+        "lat": -25.4093,
+        "lon": -54.6111,
+        "hashrate_share": 4.2,
+        "power_capacity_mw": 180,
+        "energy_type": "Hydro",
+        "renewable_percentage": 100.0,
+        "grid_intensity": 0,
+        "status": "Active",
+        "institutional_control": "SATO Technologies, Marathon Digital"
+    }
+]
+
+HISTORICAL_DATA = [
+    {"year": 2020, "United States": 3.4, "China": 65.1, "Kazakhstan": 6.1, "Russia": 6.8, "Canada": 2.8, "Others": 15.8},
+    {"year": 2021, "United States": 17.2, "China": 34.3, "Kazakhstan": 18.2, "Russia": 11.1, "Canada": 4.1, "Others": 15.1},
+    {"year": 2022, "United States": 37.8, "China": 0.0, "Kazakhstan": 13.2, "Russia": 8.9, "Canada": 6.5, "Others": 33.6},
+    {"year": 2023, "United States": 39.5, "China": 14.2, "Kazakhstan": 9.8, "Russia": 7.5, "Canada": 5.8, "Others": 23.2},
+    {"year": 2024, "United States": 40.1, "China": 16.5, "Kazakhstan": 8.2, "Russia": 7.1, "Canada": 5.4, "Others": 22.7},
+    {"year": 2025, "United States": 41.5, "China": 18.0, "Kazakhstan": 7.5, "Russia": 6.8, "Canada": 5.0, "Others": 21.2},
+    {"year": 2026, "United States": 42.1, "China": 19.5, "Kazakhstan": 6.9, "Russia": 6.5, "Canada": 4.8, "Others": 20.2}
+]
+
+MINING_POOLS = [
+    {"name": "Foundry USA", "share": 29.5, "headquarters": "United States", "operator": "Digital Currency Group"},
+    {"name": "AntPool", "share": 26.2, "headquarters": "China / Singapore", "operator": "Bitmain"},
+    {"name": "F2Pool", "share": 12.1, "headquarters": "China", "operator": "Chun Wang"},
+    {"name": "ViaBTC", "share": 11.8, "headquarters": "China", "operator": "Haipo Yang"},
+    {"name": "Binance Pool", "share": 8.4, "headquarters": "Malta/Global", "operator": "Binance"},
+    {"name": "MaraPool", "share": 4.5, "headquarters": "United States", "operator": "Marathon Digital Holdings"},
+    {"name": "Others", "share": 7.5, "headquarters": "Global", "operator": "Decentralized independent nodes"}
+]
+
+import urllib.request
+
+def fetch_live_hashrate() -> float:
+    try:
+        url = "https://blockchain.info/q/hashrate"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=4) as response:
+            raw_gh = float(response.read().decode("utf-8").strip())
+            # Convert Gigahashes/sec to Exahashes/sec (divide by 1,000,000,000)
+            ehs = round(raw_gh / 1_000_000_000, 1)
+            if ehs > 10.0:  # Validate sanity threshold
+                return ehs
+    except Exception as e:
+        print(f"Error fetching live hashrate, using default: {e}")
+    return 612.4
+
+@app.get("/api/summary")
+def get_summary():
+    live_hashrate = fetch_live_hashrate()
+    return {
+        "global_hashrate_ehs": live_hashrate,
+        "avg_renewable_percentage": 54.8,
+        "top_country": "United States (42.1%)",
+        "active_hubs_tracked": len(MINING_HUBS),
+        "last_updated": "June 2026 (Live)"
+    }
+
+@app.get("/api/map-data")
+def get_map_data():
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [hub["lon"], hub["lat"]]
+                },
+                "properties": {
+                    "id": hub["id"],
+                    "name": hub["name"],
+                    "country": hub["country"],
+                    "region": hub["region"],
+                    "hashrate_share": hub["hashrate_share"],
+                    "power_capacity_mw": hub["power_capacity_mw"],
+                    "energy_type": hub["energy_type"],
+                    "renewable_percentage": hub["renewable_percentage"],
+                    "grid_intensity": hub["grid_intensity"],
+                    "status": hub["status"],
+                    "institutional_control": hub["institutional_control"]
+                }
+            } for hub in MINING_HUBS
+        ]
+    }
+
+@app.get("/api/historical")
+def get_historical():
+    return HISTORICAL_DATA
+
+@app.get("/api/pools")
+def get_pools():
+    return MINING_POOLS
+
+@app.get("/api/download")
+def download_data():
+    # Construct a dataframe from mining hubs data
+    df = pd.DataFrame(MINING_HUBS)
+    csv_data = df.to_csv(index=False)
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=bitcoin_mining_concentration_hubs.csv"}
+    )
+</file>
+
+<file path="backend/requirements.txt">
+fastapi>=0.100.0
+uvicorn>=0.22.0
+pandas>=2.0.0
+pydantic>=2.0.0
+</file>
+
+<file path="frontend/.gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+</file>
+
+<file path="frontend/eslint.config.mjs">
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+</file>
+
+<file path="frontend/next.config.ts">
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;
+</file>
+
+<file path="frontend/package.json">
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.21.0",
+    "next": "16.2.9",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-leaflet": "^5.0.0",
+    "recharts": "^3.8.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+</file>
+
+<file path="frontend/postcss.config.mjs">
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+</file>
+
+<file path="frontend/public/file.svg">
+<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+</file>
+
+<file path="frontend/public/globe.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+</file>
+
+<file path="frontend/public/next.svg">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+</file>
+
+<file path="frontend/public/vercel.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+</file>
+
+<file path="frontend/public/window.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+</file>
+
+<file path="frontend/README.md">
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+</file>
+
+<file path="frontend/src/app/globals.css">
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  --background: #030712;
+  --foreground: #f3f4f6;
+  --card: #0b1117;
+  --card-foreground: #f3f4f6;
+  --popover: #0b1117;
+  --popover-foreground: #f3f4f6;
+  --primary: #38bdf8;
+  --primary-foreground: #030712;
+  --secondary: #818cf8;
+  --secondary-foreground: #ffffff;
+  --muted: #1f2937;
+  --muted-foreground: #9ca3af;
+  --accent: #38bdf8;
+  --accent-foreground: #030712;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #1f2937;
+  --input: #1f2937;
+  --ring: #38bdf8;
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-border: var(--border);
+  --color-muted-foreground: var(--muted-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #030712;
+}
+::-webkit-scrollbar-thumb {
+  background: #1f2937;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8;
+}
+
+/* Glassmorphism & Neon Glow */
+.glass-panel {
+  background: rgba(11, 17, 23, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(31, 41, 55, 0.6);
+}
+
+.glow-active {
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+  border-color: #38bdf8 !important;
+}
+
+/* Leaflet Overrides to match Fintech Dark Theme */
+.leaflet-container {
+  background: #030712 !important;
+  width: 100%;
+  height: 100%;
+}
+
+.leaflet-bar {
+  border: 1px solid #1f2937 !important;
+  box-shadow: none !important;
+}
+
+.leaflet-bar a {
+  background-color: #0b1117 !important;
+  color: #38bdf8 !important;
+  border-bottom: 1px solid #1f2937 !important;
+}
+
+.leaflet-bar a:hover {
+  background-color: #1f2937 !important;
+  color: #818cf8 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #0b1117 !important;
+  color: #f3f4f6 !important;
+  border: 1px solid #1f2937 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2) !important;
+}
+
+.leaflet-popup-tip {
+  background: #0b1117 !important;
+  border: 1px solid #1f2937 !important;
+}
+</file>
+
+<file path="frontend/src/app/layout.tsx">
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Bitcoin Mining Concentration Map | Real Rails Intelligence",
+  description: "Real-time geographical hashrate mapping, energy mix contexts, pool concentrations, and historical decentralization analysis.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="h-full bg-[#030712] text-gray-100 flex flex-col selection:bg-cyan-500/30 selection:text-cyan-300">
+        {children}
+      </body>
+    </html>
+  );
+}
+</file>
+
+<file path="frontend/src/app/page.tsx">
+"use client";
+
+import { useEffect, useState, useRef, useTransition } from "react";
+import dynamic from "next/dynamic";
+import { 
+  Activity, 
+  Leaf, 
+  Cpu, 
+  Download, 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  Info, 
+  ShieldAlert, 
+  Globe,
+  Settings,
+  Database
+} from "lucide-react";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip as ChartTooltip,
+  BarChart,
+  Bar,
+  Cell,
+  Legend
+} from "recharts";
+
+// Dynamically import map component to disable SSR errors
+const MiningMap = dynamic(() => import("../components/MiningMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-[#0b1117] border border-gray-800 rounded-lg text-gray-400">
+      <div className="flex flex-col items-center gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+        <p className="text-sm font-mono tracking-wider">INITIALIZING GEOSPATIAL MAP ENGINE...</p>
+      </div>
+    </div>
+  )
+});
+
+// Fallback Mock Datasets (Document 4 Guardrail)
+const MOCK_SUMMARY = {
+  global_hashrate_ehs: 612.4,
+  avg_renewable_percentage: 54.8,
+  top_country: "United States (42.1%)",
+  active_hubs_tracked: 8,
+  last_updated: "June 2026"
+};
+
+const MOCK_MINING_HUBS = [
+  {
+    "id": "hub-us-texas",
+    "name": "Texas ERCOT Hub",
+    "country": "United States",
+    "region": "Texas",
+    "lat": 31.9686,
+    "lon": -99.9018,
+    "hashrate_share": 28.5,
+    "power_capacity_mw": 850,
+    "energy_type": "Wind/Solar/Gas",
+    "renewable_percentage": 42.0,
+    "grid_intensity": 380,
+    "status": "Active",
+    "institutional_control": "Riot Platforms, Marathon Digital, Core Scientific"
+  },
+  {
+    "id": "hub-us-georgia",
+    "name": "Georgia Industrial Cluster",
+    "country": "United States",
+    "region": "Georgia",
+    "lat": 32.1656,
+    "lon": -82.9001,
+    "hashrate_share": 6.8,
+    "power_capacity_mw": 240,
+    "energy_type": "Nuclear/Coal/Gas",
+    "renewable_percentage": 25.0,
+    "grid_intensity": 410,
+    "status": "Active",
+    "institutional_control": "CleanSpark, Terawulf"
+  },
+  {
+    "id": "hub-kz-ekibastuz",
+    "name": "Ekibastuz Coal Basin Hub",
+    "country": "Kazakhstan",
+    "region": "Ekibastuz",
+    "lat": 51.7297,
+    "lon": 75.3266,
+    "hashrate_share": 11.2,
+    "power_capacity_mw": 450,
+    "energy_type": "Coal",
+    "renewable_percentage": 2.0,
+    "grid_intensity": 880,
+    "status": "Restricted",
+    "institutional_control": "Local Grid Operators & private consortiums"
+  },
+  {
+    "id": "hub-cn-sichuan",
+    "name": "Sichuan Hydro-Mining Hub",
+    "country": "China",
+    "region": "Sichuan",
+    "lat": 30.6570,
+    "lon": 104.0658,
+    "hashrate_share": 9.5,
+    "power_capacity_mw": 380,
+    "energy_type": "Hydro",
+    "renewable_percentage": 92.0,
+    "grid_intensity": 75,
+    "status": "Underground",
+    "institutional_control": "Private domestic pools & independent miners"
+  },
+  {
+    "id": "hub-ru-bratsk",
+    "name": "Bratsk Hydro Hub",
+    "country": "Russia",
+    "region": "Siberia",
+    "lat": 56.1322,
+    "lon": 101.6142,
+    "hashrate_share": 8.0,
+    "power_capacity_mw": 320,
+    "energy_type": "Hydro",
+    "renewable_percentage": 85.0,
+    "grid_intensity": 90,
+    "status": "Active",
+    "institutional_control": "BitRiver"
+  },
+  {
+    "id": "hub-is-reykjavik",
+    "name": "Icelandic Geothermal Sites",
+    "country": "Iceland",
+    "region": "Reykjanes",
+    "lat": 64.1466,
+    "lon": -21.9426,
+    "hashrate_share": 2.1,
+    "power_capacity_mw": 90,
+    "energy_type": "Geothermal/Hydro",
+    "renewable_percentage": 100.0,
+    "grid_intensity": 0,
+    "status": "Active",
+    "institutional_control": "Genesis Mining, Hive Digital"
+  },
+  {
+    "id": "hub-ca-quebec",
+    "name": "Quebec Hydro Grid Hub",
+    "country": "Canada",
+    "region": "Quebec",
+    "lat": 52.9399,
+    "lon": -73.5491,
+    "hashrate_share": 3.4,
+    "power_capacity_mw": 140,
+    "energy_type": "Hydro",
+    "renewable_percentage": 99.0,
+    "grid_intensity": 5,
+    "status": "Active",
+    "institutional_control": "Bitfarms, Hut 8"
+  },
+  {
+    "id": "hub-py-itaipu",
+    "name": "Itaipu Dam Hub",
+    "country": "Paraguay",
+    "region": "Ciudad del Este",
+    "lat": -25.4093,
+    "lon": -54.6111,
+    "hashrate_share": 4.2,
+    "power_capacity_mw": 180,
+    "energy_type": "Hydro",
+    "renewable_percentage": 100.0,
+    "grid_intensity": 0,
+    "status": "Active",
+    "institutional_control": "SATO Technologies, Marathon Digital"
+  }
+];
+
+const MOCK_HISTORICAL = [
+  {"year": 2020, "United States": 3.4, "China": 65.1, "Kazakhstan": 6.1, "Russia": 6.8, "Canada": 2.8, "Others": 15.8},
+  {"year": 2021, "United States": 17.2, "China": 34.3, "Kazakhstan": 18.2, "Russia": 11.1, "Canada": 4.1, "Others": 15.1},
+  {"year": 2022, "United States": 37.8, "China": 0.0, "Kazakhstan": 13.2, "Russia": 8.9, "Canada": 6.5, "Others": 33.6},
+  {"year": 2023, "United States": 39.5, "China": 14.2, "Kazakhstan": 9.8, "Russia": 7.5, "Canada": 5.8, "Others": 23.2},
+  {"year": 2024, "United States": 40.1, "China": 16.5, "Kazakhstan": 8.2, "Russia": 7.1, "Canada": 5.4, "Others": 22.7},
+  {"year": 2025, "United States": 41.5, "China": 18.0, "Kazakhstan": 7.5, "Russia": 6.8, "Canada": 5.0, "Others": 21.2},
+  {"year": 2026, "United States": 42.1, "China": 19.5, "Kazakhstan": 6.9, "Russia": 6.5, "Canada": 4.8, "Others": 20.2}
+];
+
+const MOCK_POOLS = [
+  {"name": "Foundry USA", "share": 29.5, "headquarters": "United States", "operator": "Digital Currency Group"},
+  {"name": "AntPool", "share": 26.2, "headquarters": "China / Singapore", "operator": "Bitmain"},
+  {"name": "F2Pool", "share": 12.1, "headquarters": "China", "operator": "Chun Wang"},
+  {"name": "ViaBTC", "share": 11.8, "headquarters": "China", "operator": "Haipo Yang"},
+  {"name": "Binance Pool", "share": 8.4, "headquarters": "Malta/Global", "operator": "Binance"},
+  {"name": "MaraPool", "share": 4.5, "headquarters": "United States", "operator": "Marathon Digital Holdings"},
+  {"name": "Others", "share": 7.5, "headquarters": "Global", "operator": "Decentralized independent nodes"}
+];
+
+export default function Dashboard() {
+  const [isPending, startTransition] = useTransition();
+
+  // Core API State
+  const [summary, setSummary] = useState(MOCK_SUMMARY);
+  const [hubs, setHubs] = useState(MOCK_MINING_HUBS);
+  const [historical, setHistorical] = useState(MOCK_HISTORICAL);
+  const [pools, setPools] = useState(MOCK_POOLS);
+  const [isUsingMock, setIsUsingMock] = useState(false);
+
+  // Interaction State
+  const [selectedHub, setSelectedHub] = useState<any>(null);
+  const [selectedCountryFilter, setSelectedCountryFilter] = useState("All");
+  const [selectedEnergyFilter, setSelectedEnergyFilter] = useState("All");
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState("All");
+  
+  // Replay timeline
+  const [replayYear, setReplayYear] = useState(2026);
+  const [isReplaying, setIsReplaying] = useState(false);
+  const timerRef = useRef<any>(null);
+
+  // Fetch API data on load with fallback logic
+  useEffect(() => {
+    const API_URL = "http://localhost:8000/api";
+
+    const fetchDashboardData = async () => {
+      try {
+        const [sumRes, mapRes, histRes, poolRes] = await Promise.all([
+          fetch(`${API_URL}/summary`),
+          fetch(`${API_URL}/map-data`),
+          fetch(`${API_URL}/historical`),
+          fetch(`${API_URL}/pools`)
+        ]);
+
+        if (!sumRes.ok || !mapRes.ok || !histRes.ok || !poolRes.ok) {
+          throw new Error("HTTP error on API fetch");
+        }
+
+        const sumJson = await sumRes.json();
+        const mapJson = await mapRes.json();
+        const histJson = await histRes.json();
+        const poolJson = await poolRes.json();
+
+        // Convert GeoJSON features back to flat array for React layout filters
+        const hubsList = mapJson.features.map((f: any) => ({
+          ...f.properties,
+          lat: f.geometry.coordinates[1],
+          lon: f.geometry.coordinates[0]
+        }));
+
+        setSummary(sumJson);
+        setHubs(hubsList);
+        setHistorical(histJson);
+        setPools(poolJson);
+        setIsUsingMock(false);
+      } catch (err) {
+        console.warn("Backend API not reachable. Switching to local mock dataset:", err);
+        setIsUsingMock(true);
+        // Reset states to fallback values
+        setSummary(MOCK_SUMMARY);
+        setHubs(MOCK_MINING_HUBS);
+        setHistorical(MOCK_HISTORICAL);
+        setPools(MOCK_POOLS);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Handle Play/Pause timeline replay
+  useEffect(() => {
+    if (isReplaying) {
+      timerRef.current = setInterval(() => {
+        setReplayYear((prevYear) => {
+          if (prevYear >= 2026) return 2020;
+          return prevYear + 1;
+        });
+      }, 1500);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isReplaying]);
+
+  // Apply interactive filters
+  const filteredHubs = hubs.filter((hub) => {
+    // Country Filter
+    if (selectedCountryFilter !== "All" && hub.country !== selectedCountryFilter) return false;
+    
+    // Status Filter
+    if (selectedStatusFilter !== "All" && hub.status !== selectedStatusFilter) return false;
+    
+    // Energy Filter
+    if (selectedEnergyFilter !== "All") {
+      if (selectedEnergyFilter === "Hydro" && !hub.energy_type.toLowerCase().includes("hydro")) return false;
+      if (selectedEnergyFilter === "Renewable Dominant" && hub.renewable_percentage < 80) return false;
+      if (selectedEnergyFilter === "Fossil Heavy" && hub.renewable_percentage > 40) return false;
+    }
+    
+    return true;
+  });
+
+  // Re-map features list to match Leaflet map requirements
+  const mapFeatures = filteredHubs.map((hub) => ({
+    type: "Feature",
+    geometry: {
+      type: "Point" as const,
+      coordinates: [hub.lon, hub.lat] as [number, number],
+    },
+    properties: hub,
+  }));
+
+  // Download Data logic
+  const handleDownload = () => {
+    if (isUsingMock) {
+      // Build client-side CSV download if API is down
+      const headers = "id,name,country,region,lat,lon,hashrate_share,power_capacity_mw,energy_type,renewable_percentage,grid_intensity,status,institutional_control\n";
+      const rows = hubs.map(h => 
+        `"${h.id}","${h.name}","${h.country}","${h.region}",${h.lat},${h.lon},${h.hashrate_share},${h.power_capacity_mw},"${h.energy_type}",${h.renewable_percentage},${h.grid_intensity},"${h.status}","${h.institutional_control}"`
+      ).join("\n");
+      const blob = new Blob([headers + rows], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "bitcoin_mining_concentration_hubs_local.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      // Trigger direct download from backend
+      window.open("http://localhost:8000/api/download", "_blank");
+    }
+  };
+
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-[#030712] text-gray-100 font-sans">
+      
+      {/* LEFT STAGE: 70% Width */}
+      <div className="w-[70%] h-full flex flex-col p-4 space-y-4 border-r border-gray-800">
+        
+        {/* Top Header Metrics & Control HUD */}
+        <div className="flex items-center justify-between glass-panel border border-gray-800 p-3 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Globe className="w-5 h-5 text-cyan-400 animate-pulse" />
+            <div>
+              <span className="text-[10px] text-gray-400 uppercase tracking-widest block font-mono">Terminal Active Instance</span>
+              <h2 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+                Settlement & Infrastructure: Bitcoin HASHRATE MATRIX
+              </h2>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <span className="text-[10px] text-gray-400 uppercase block font-mono">GLOBAL HASHRATE</span>
+              <span className="text-sm font-bold text-cyan-400">{summary.global_hashrate_ehs} EH/s</span>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] text-gray-400 uppercase block font-mono">AVG RENEWABLE %</span>
+              <span className="text-sm font-bold text-emerald-400">{summary.avg_renewable_percentage}%</span>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] text-gray-400 uppercase block font-mono">SOURCE CONNECTIVITY</span>
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${isUsingMock ? "text-amber-400 border-amber-400/40 bg-amber-950/20" : "text-emerald-400 border-emerald-400/40 bg-emerald-950/20"}`}>
+                {isUsingMock ? "OFFLINE (LOCAL MOCK)" : "ONLINE (API)"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Interactive Leaflet Map stage */}
+        <div className="flex-1 min-h-[350px] relative">
+          <MiningMap 
+            features={mapFeatures} 
+            selectedHubId={selectedHub?.id || null} 
+            onSelectHub={setSelectedHub} 
+          />
+        </div>
+
+        {/* Lower Analytics Stage: Split between Replay Chart & Pool Distribution */}
+        <div className="h-[220px] grid grid-cols-2 gap-4">
+          
+          {/* Replay over Time / Country Share Line Chart */}
+          <div className="glass-panel border border-gray-800 rounded-lg p-3 flex flex-col justify-between">
+            <div className="flex items-center justify-between border-b border-gray-800/80 pb-1.5">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs font-semibold tracking-wider text-gray-300 uppercase">Hashrate Share Timeline ({replayYear})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setIsReplaying(!isReplaying)}
+                  className="p-1 rounded bg-cyan-900/30 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 transition"
+                  title={isReplaying ? "Pause Replay" : "Play Replay Over Time"}
+                >
+                  {isReplaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                </button>
+                <button 
+                  onClick={() => { setIsReplaying(false); setReplayYear(2026); }}
+                  className="p-1 rounded bg-gray-900/50 hover:bg-gray-800 border border-gray-700 text-gray-400 transition"
+                  title="Reset to Current"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+
+            {/* Replay Slider controller */}
+            <div className="my-2 flex items-center gap-3 px-1">
+              <span className="text-[10px] font-mono text-gray-500">2020</span>
+              <input
+                type="range"
+                min="2020"
+                max="2026"
+                value={replayYear}
+                onChange={(e) => {
+                  setIsReplaying(false);
+                  setReplayYear(parseInt(e.target.value));
+                }}
+                className="flex-1 accent-cyan-400 h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer"
+              />
+              <span className="text-[10px] font-mono text-cyan-400 font-bold">{replayYear}</span>
+            </div>
+
+            {/* Recharts Area Chart */}
+            <div className="flex-1 w-full text-[9px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={historical.filter(h => h.year <= replayYear)}>
+                  <XAxis dataKey="year" stroke="#4b5563" />
+                  <YAxis stroke="#4b5563" />
+                  <ChartTooltip 
+                    contentStyle={{ backgroundColor: "#0b1117", borderColor: "#1f2937", color: "#f3f4f6" }}
+                  />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: '9px', marginTop: '-5px' }} />
+                  <Area type="monotone" dataKey="United States" stroke="#38bdf8" fill="#38bdf8" fillOpacity={0.1} stackId="1" />
+                  <Area type="monotone" dataKey="China" stroke="#ef4444" fill="#ef4444" fillOpacity={0.1} stackId="1" />
+                  <Area type="monotone" dataKey="Kazakhstan" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.1} stackId="1" />
+                  <Area type="monotone" dataKey="Russia" stroke="#818cf8" fill="#818cf8" fillOpacity={0.1} stackId="1" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Mining Pools Concentration Analytics */}
+          <div className="glass-panel border border-gray-800 rounded-lg p-3 flex flex-col justify-between">
+            <div className="flex items-center gap-2 border-b border-gray-800/80 pb-1.5">
+              <Cpu className="w-4 h-4 text-indigo-400" />
+              <span className="text-xs font-semibold tracking-wider text-gray-300 uppercase">Pool Hashrate Share (%)</span>
+            </div>
+
+            {/* Recharts Bar Chart */}
+            <div className="flex-1 w-full text-[9px] mt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={pools} layout="vertical">
+                  <XAxis type="number" stroke="#4b5563" domain={[0, 35]} />
+                  <YAxis dataKey="name" type="category" stroke="#4b5563" width={70} />
+                  <ChartTooltip
+                    contentStyle={{ backgroundColor: "#0b1117", borderColor: "#1f2937", color: "#f3f4f6" }}
+                  />
+                  <Bar dataKey="share" fill="#818cf8" radius={[0, 4, 4, 0]}>
+                    {pools.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.name === "Foundry USA" || entry.name === "AntPool" ? "#38bdf8" : "#818cf8"} 
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* INTELLIGENCE SIDEBAR: 30% Width */}
+      <div className="w-[30%] h-full flex flex-col bg-[#0b1117] border-l border-gray-800 p-6 justify-between overflow-y-auto">
+        
+        {/* Section A: Title & High-level Metric */}
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2 text-cyan-400 text-xs font-bold uppercase tracking-widest mb-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping inline-block" />
+              Settlement & Infrastructure
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-white uppercase">
+              Bitcoin Mining Concentration Map
+            </h1>
+            <p className="text-xs text-gray-400 mt-1">
+              Geospatial telemetry mapping institutional, state, and pool-level control nodes.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="p-3 bg-[#030712] border border-gray-800/80 rounded-md">
+              <span className="text-[10px] text-gray-400 block font-mono">DOMINANT REGION</span>
+              <span className="text-xs font-bold text-cyan-400 uppercase">{summary.top_country}</span>
+            </div>
+            <div className="p-3 bg-[#030712] border border-gray-800/80 rounded-md">
+              <span className="text-[10px] text-gray-400 block font-mono">TRACKED NODES</span>
+              <span className="text-xs font-bold text-indigo-400 uppercase">{summary.active_hubs_tracked} Global Hubs</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Section B: Why This Matters */}
+        <div className="border-t border-gray-800 py-4 space-y-2">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+            <Info className="w-3.5 h-3.5" /> Why This Matters
+          </h3>
+          <p className="text-xs text-gray-300 leading-relaxed font-sans">
+            Shows that even decentralized systems have physical concentration points. Hardware deployments, energy off-take structures, and local regulatory policies shape the routing of settlement security.
+          </p>
+        </div>
+
+        {/* Section C: Who Controls the Rail */}
+        <div className="border-t border-gray-800 py-4 space-y-2">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+            <ShieldAlert className="w-3.5 h-3.5" /> Who Controls the Rail
+          </h3>
+          <p className="text-xs text-gray-300 leading-relaxed font-sans">
+            The Bitcoin Mining Concentration Map reveals a centralized power dynamic where control over network security and transaction validation is heavily consolidated among a few dominant geographic regions and massive mining pools, challenging Bitcoin's foundational ethos of decentralization.
+          </p>
+        </div>
+
+        {/* Selected Hub Interactive Inspector Card */}
+        {selectedHub && (
+          <div className="border border-cyan-500/40 bg-[#030712]/90 rounded-md p-3 space-y-2 relative glow-active">
+            <div className="flex justify-between items-start border-b border-gray-800 pb-1">
+              <h4 className="text-xs font-bold text-white uppercase">{selectedHub.name}</h4>
+              <button 
+                onClick={() => setSelectedHub(null)}
+                className="text-[10px] text-gray-500 hover:text-cyan-400 transition"
+              >
+                ✕ Close
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[10px]">
+              <div>
+                <span className="text-gray-400 block font-mono">Location:</span>
+                <span className="text-gray-200">{selectedHub.region}, {selectedHub.country}</span>
+              </div>
+              <div>
+                <span className="text-gray-400 block font-mono">Capacity:</span>
+                <span className="text-gray-200 font-semibold">{selectedHub.power_capacity_mw} MW</span>
+              </div>
+              <div>
+                <span className="text-gray-400 block font-mono">Hashrate Share:</span>
+                <span className="text-cyan-400 font-bold">{selectedHub.hashrate_share}%</span>
+              </div>
+              <div>
+                <span className="text-gray-400 block font-mono">Energy Mix:</span>
+                <span className="text-emerald-400 font-bold">{selectedHub.renewable_percentage}% Green ({selectedHub.energy_type})</span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-gray-400 block font-mono">Institutional Control:</span>
+                <span className="text-gray-300 italic">{selectedHub.institutional_control}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Section D: Functional Filters */}
+        <div className="border-t border-gray-800 py-4 space-y-4">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase text-gray-300">
+            <Settings className="w-3.5 h-3.5" /> Interactive Filters
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="text-[9px] uppercase tracking-wider text-gray-500 block mb-1">Country Node</label>
+              <select
+                value={selectedCountryFilter}
+                onChange={(e) => setSelectedCountryFilter(e.target.value)}
+                className="w-full text-xs bg-[#030712] border border-gray-800 rounded p-1.5 text-gray-200 focus:outline-none focus:border-cyan-400"
+              >
+                <option value="All">All Countries</option>
+                <option value="United States">United States</option>
+                <option value="China">China</option>
+                <option value="Kazakhstan">Kazakhstan</option>
+                <option value="Russia">Russia</option>
+                <option value="Canada">Canada</option>
+                <option value="Paraguay">Paraguay</option>
+                <option value="Iceland">Iceland</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[9px] uppercase tracking-wider text-gray-500 block mb-1">Operational Status</label>
+              <select
+                value={selectedStatusFilter}
+                onChange={(e) => setSelectedStatusFilter(e.target.value)}
+                className="w-full text-xs bg-[#030712] border border-gray-800 rounded p-1.5 text-gray-200 focus:outline-none focus:border-cyan-400"
+              >
+                <option value="All">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Restricted">Restricted / Capped</option>
+                <option value="Underground">Underground / Unreported</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[9px] uppercase tracking-wider text-gray-500 block mb-1">Grid Composition</label>
+              <select
+                value={selectedEnergyFilter}
+                onChange={(e) => setSelectedEnergyFilter(e.target.value)}
+                className="w-full text-xs bg-[#030712] border border-gray-800 rounded p-1.5 text-gray-200 focus:outline-none focus:border-cyan-400"
+              >
+                <option value="All">All Energy Grid Types</option>
+                <option value="Hydro">Hydro-Electric Dominant</option>
+                <option value="Renewable Dominant">High Green Mix (&gt;80%)</option>
+                <option value="Fossil Heavy">High Fossil Mix (&lt;40%)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Section E: Download Sample Data Button */}
+        <div className="border-t border-gray-800 pt-4">
+          <button
+            onClick={handleDownload}
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded bg-cyan-500 text-[#030712] hover:bg-cyan-400 active:scale-[0.98] transition font-bold text-xs uppercase tracking-wider"
+          >
+            <Download className="w-4 h-4" /> Download Hub telemetries
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/components/MiningMap.tsx">
+"use client";
+
+import { useEffect } from "react";
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+
+interface HubProperties {
+  id: string;
+  name: string;
+  country: string;
+  region: string;
+  hashrate_share: number;
+  power_capacity_mw: number;
+  energy_type: string;
+  renewable_percentage: number;
+  grid_intensity: number;
+  status: string;
+  institutional_control: string;
+}
+
+interface MiningMapProps {
+  features: Array<{
+    type: string;
+    geometry: {
+      type: string;
+      coordinates: [number, number];
+    };
+    properties: HubProperties;
+  }>;
+  selectedHubId: string | null;
+  onSelectHub: (hub: HubProperties | null) => void;
+}
+
+// Controller component to programmatically pan/zoom when a hub is selected
+function MapController({ selectedHubId, features }: { selectedHubId: string | null; features: any[] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (selectedHubId) {
+      const selectedFeature = features.find(f => f.properties.id === selectedHubId);
+      if (selectedFeature) {
+        const [lon, lat] = selectedFeature.geometry.coordinates;
+        map.setView([lat, lon], 5, { animate: true });
+      }
+    }
+  }, [selectedHubId, features, map]);
+
+  return null;
+}
+
+export default function MiningMap({ features, selectedHubId, onSelectHub }: MiningMapProps) {
+  // Fix leaflet asset path issues in SSR/Next environment
+  useEffect(() => {
+    // Delete default icon prototype options if using default markers
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+      iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+      shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+    });
+  }, []);
+
+  // Helper to color-code bubbles by energy type / renewable %
+  const getMarkerColor = (renewablePct: number) => {
+    if (renewablePct >= 80) return "#10B981"; // Hydro/Green - Emerald
+    if (renewablePct >= 40) return "#38BDF8"; // Mix - Electric Cyan
+    return "#F59E0B"; // Fossil Heavy - Amber
+  };
+
+  return (
+    <div className="w-full h-full relative rounded-lg overflow-hidden border border-gray-800 shadow-2xl">
+      <MapContainer
+        center={[20, 0]}
+        zoom={2}
+        minZoom={2}
+        maxZoom={10}
+        scrollWheelZoom={true}
+        className="w-full h-full"
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        />
+
+        {features.map((feature) => {
+          const [lon, lat] = feature.geometry.coordinates;
+          const { id, name, country, hashrate_share, renewable_percentage, energy_type } = feature.properties;
+          const isSelected = selectedHubId === id;
+          const radius = Math.max(8, Math.sqrt(hashrate_share) * 6);
+
+          return (
+            <CircleMarker
+              key={id}
+              center={[lat, lon]}
+              radius={radius}
+              fillColor={getMarkerColor(renewable_percentage)}
+              color={isSelected ? "#ffffff" : "#1f2937"}
+              weight={isSelected ? 2 : 1}
+              fillOpacity={isSelected ? 0.85 : 0.6}
+              eventHandlers={{
+                click: () => {
+                  onSelectHub(feature.properties);
+                },
+              }}
+            >
+              <Popup className="dark-leaflet-popup">
+                <div className="p-2 space-y-1 font-sans text-xs">
+                  <h4 className="font-bold text-gray-100 border-b border-gray-800 pb-1 mb-1">
+                    {name}
+                  </h4>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-400">Country:</span>
+                    <span className="text-gray-200">{country}</span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-400">Hashrate Share:</span>
+                    <span className="text-cyan-400 font-semibold">{hashrate_share}%</span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-400">Primary Energy:</span>
+                    <span className="text-emerald-400 font-semibold">{energy_type} ({renewable_percentage}%)</span>
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          );
+        })}
+
+        <MapController selectedHubId={selectedHubId} features={features} />
+      </MapContainer>
+
+      {/* Map Legend overlay */}
+      <div className="absolute bottom-4 left-4 z-[1000] p-3 rounded-md bg-[#0b1117]/90 border border-gray-800 text-[10px] space-y-1.5 backdrop-blur-sm pointer-events-auto">
+        <div className="font-semibold text-gray-300 uppercase tracking-wider mb-1">Energy Profile</div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] inline-block" />
+          <span className="text-gray-300">Renewable Dominant (&gt;80%)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#38BDF8] inline-block" />
+          <span className="text-gray-300">Mixed Grid (40% - 80%)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] inline-block" />
+          <span className="text-gray-300">Fossil Heavy (&lt;40%)</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+</file>
+
+</files>
