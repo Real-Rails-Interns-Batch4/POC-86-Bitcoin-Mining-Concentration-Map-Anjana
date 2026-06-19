@@ -34,3 +34,7 @@ backend/__pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Repomix outputs
+repomix-output.xml
+
