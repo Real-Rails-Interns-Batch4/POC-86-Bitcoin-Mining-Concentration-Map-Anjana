@@ -6,10 +6,18 @@ A real-time analytics terminal and interactive geospatial dashboard designed for
 
 ## 📋 Table of Contents
 - [Project Overview](#-project-overview)
+- [Demo Video](#-demo-video)
 - [Architecture](#-architecture)
 - [Setup & Installation](#-setup--installation)
 - [Screenshots](#-screenshots)
 - [UAT & Verification](#-uat--verification)
+
+---
+
+## 🎥 Demo Video
+
+A walkthrough video demonstrating the features of the Bitcoin Mining Concentration Map is available in the repository:
+- **[Watch Demo Video](./docs/demo.mp4)**
 
 ---
 
