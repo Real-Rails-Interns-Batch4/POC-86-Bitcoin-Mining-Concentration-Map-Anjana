@@ -194,6 +194,8 @@ const MOCK_POOLS = [
   {"name": "Others", "share": 7.5, "headquarters": "Global", "operator": "Decentralized independent nodes"}
 ];
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
 export default function Dashboard() {
   const [isPending, startTransition] = useTransition();
 
@@ -217,8 +219,6 @@ export default function Dashboard() {
 
   // Fetch API data on load with fallback logic
   useEffect(() => {
-    const API_URL = "http://localhost:8000/api";
-
     const fetchDashboardData = async () => {
       try {
         const [sumRes, mapRes, histRes, poolRes] = await Promise.all([
@@ -329,7 +329,7 @@ export default function Dashboard() {
       document.body.removeChild(a);
     } else {
       // Trigger direct download from backend
-      window.open("http://localhost:8000/api/download", "_blank");
+      window.open(`${API_URL}/download`, "_blank");
     }
   };
 

@@ -28,13 +28,13 @@ The Bitcoin Mining Concentration Map dashboard is a real-time analytics terminal
 The layout, visual colors, and functional elements were verified on the local development build:
 
 1. **Dashboard Interface**:
-   ![Dashboard Interface](/d:/academics/INTERNSHIP/bitcoin/docs/dashboard_loaded_1781885929648.png)
+   ![Dashboard Interface](./dashboard_loaded_1781885929648.png)
 
 2. **Scrolled view showing bottom charts**:
-   ![Timeline & Pool Charts](/d:/academics/INTERNSHIP/bitcoin/docs/dashboard_scrolled_1781885951232.png)
+   ![Timeline & Pool Charts](./dashboard_scrolled_1781885951232.png)
 
 3. **Interactive Dropdowns & Selection Filters**:
-   ![Dropdown Filters](/d:/academics/INTERNSHIP/bitcoin/docs/dropdown_open_1781886039839.png)
+   ![Dropdown Filters](./dropdown_open_1781886039839.png)
 
 ### Verified Checklist:
 - **Obsidian Black Theme (#030712)**: Confirmed.
