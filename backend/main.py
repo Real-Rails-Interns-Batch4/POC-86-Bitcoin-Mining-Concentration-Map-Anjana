@@ -15,149 +15,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Coordinates and details for major mining sites/hubs
-MINING_HUBS = [
-    {
-        "id": "hub-us-texas",
-        "name": "Texas ERCOT Hub",
-        "country": "United States",
-        "region": "Texas",
-        "lat": 31.9686,
-        "lon": -99.9018,
-        "hashrate_share": 28.5,
-        "power_capacity_mw": 850,
-        "energy_type": "Wind/Solar/Gas",
-        "renewable_percentage": 42.0,
-        "grid_intensity": 380,
-        "status": "Active",
-        "institutional_control": "Riot Platforms, Marathon Digital, Core Scientific"
-    },
-    {
-        "id": "hub-us-georgia",
-        "name": "Georgia Industrial Cluster",
-        "country": "United States",
-        "region": "Georgia",
-        "lat": 32.1656,
-        "lon": -82.9001,
-        "hashrate_share": 6.8,
-        "power_capacity_mw": 240,
-        "energy_type": "Nuclear/Coal/Gas",
-        "renewable_percentage": 25.0,
-        "grid_intensity": 410,
-        "status": "Active",
-        "institutional_control": "CleanSpark, Terawulf"
-    },
-    {
-        "id": "hub-kz-ekibastuz",
-        "name": "Ekibastuz Coal Basin Hub",
-        "country": "Kazakhstan",
-        "region": "Ekibastuz",
-        "lat": 51.7297,
-        "lon": 75.3266,
-        "hashrate_share": 11.2,
-        "power_capacity_mw": 450,
-        "energy_type": "Coal",
-        "renewable_percentage": 2.0,
-        "grid_intensity": 880,
-        "status": "Restricted",
-        "institutional_control": "Local Grid Operators & private consortiums"
-    },
-    {
-        "id": "hub-cn-sichuan",
-        "name": "Sichuan Hydro-Mining Hub",
-        "country": "China",
-        "region": "Sichuan",
-        "lat": 30.6570,
-        "lon": 104.0658,
-        "hashrate_share": 9.5,
-        "power_capacity_mw": 380,
-        "energy_type": "Hydro",
-        "renewable_percentage": 92.0,
-        "grid_intensity": 75,
-        "status": "Underground",
-        "institutional_control": "Private domestic pools & independent miners"
-    },
-    {
-        "id": "hub-ru-bratsk",
-        "name": "Bratsk Hydro Hub",
-        "country": "Russia",
-        "region": "Siberia",
-        "lat": 56.1322,
-        "lon": 101.6142,
-        "hashrate_share": 8.0,
-        "power_capacity_mw": 320,
-        "energy_type": "Hydro",
-        "renewable_percentage": 85.0,
-        "grid_intensity": 90,
-        "status": "Active",
-        "institutional_control": "BitRiver"
-    },
-    {
-        "id": "hub-is-reykjavik",
-        "name": "Icelandic Geothermal Sites",
-        "country": "Iceland",
-        "region": "Reykjanes",
-        "lat": 64.1466,
-        "lon": -21.9426,
-        "hashrate_share": 2.1,
-        "power_capacity_mw": 90,
-        "energy_type": "Geothermal/Hydro",
-        "renewable_percentage": 100.0,
-        "grid_intensity": 0,
-        "status": "Active",
-        "institutional_control": "Genesis Mining, Hive Digital"
-    },
-    {
-        "id": "hub-ca-quebec",
-        "name": "Quebec Hydro Grid Hub",
-        "country": "Canada",
-        "region": "Quebec",
-        "lat": 52.9399,
-        "lon": -73.5491,
-        "hashrate_share": 3.4,
-        "power_capacity_mw": 140,
-        "energy_type": "Hydro",
-        "renewable_percentage": 99.0,
-        "grid_intensity": 5,
-        "status": "Active",
-        "institutional_control": "Bitfarms, Hut 8"
-    },
-    {
-        "id": "hub-py-itaipu",
-        "name": "Itaipu Dam Hub",
-        "country": "Paraguay",
-        "region": "Ciudad del Este",
-        "lat": -25.4093,
-        "lon": -54.6111,
-        "hashrate_share": 4.2,
-        "power_capacity_mw": 180,
-        "energy_type": "Hydro",
-        "renewable_percentage": 100.0,
-        "grid_intensity": 0,
-        "status": "Active",
-        "institutional_control": "SATO Technologies, Marathon Digital"
-    }
-]
+# Load datasets from JSON file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_FILE_PATH = os.path.join(BASE_DIR, "data.json")
 
-HISTORICAL_DATA = [
-    {"year": 2020, "United States": 3.4, "China": 65.1, "Kazakhstan": 6.1, "Russia": 6.8, "Canada": 2.8, "Others": 15.8},
-    {"year": 2021, "United States": 17.2, "China": 34.3, "Kazakhstan": 18.2, "Russia": 11.1, "Canada": 4.1, "Others": 15.1},
-    {"year": 2022, "United States": 37.8, "China": 0.0, "Kazakhstan": 13.2, "Russia": 8.9, "Canada": 6.5, "Others": 33.6},
-    {"year": 2023, "United States": 39.5, "China": 14.2, "Kazakhstan": 9.8, "Russia": 7.5, "Canada": 5.8, "Others": 23.2},
-    {"year": 2024, "United States": 40.1, "China": 16.5, "Kazakhstan": 8.2, "Russia": 7.1, "Canada": 5.4, "Others": 22.7},
-    {"year": 2025, "United States": 41.5, "China": 18.0, "Kazakhstan": 7.5, "Russia": 6.8, "Canada": 5.0, "Others": 21.2},
-    {"year": 2026, "United States": 42.1, "China": 19.5, "Kazakhstan": 6.9, "Russia": 6.5, "Canada": 4.8, "Others": 20.2}
-]
+try:
+    with open(DATA_FILE_PATH, "r", encoding="utf-8") as f:
+        _data = json.load(f)
+        MINING_HUBS = _data.get("mining_hubs", [])
+        HISTORICAL_DATA = _data.get("historical_data", [])
+        MINING_POOLS = _data.get("mining_pools", [])
+except Exception as e:
+    print(f"Error loading data.json: {e}")
+    MINING_HUBS = []
+    HISTORICAL_DATA = []
+    MINING_POOLS = []
 
-MINING_POOLS = [
-    {"name": "Foundry USA", "share": 29.5, "headquarters": "United States", "operator": "Digital Currency Group"},
-    {"name": "AntPool", "share": 26.2, "headquarters": "China / Singapore", "operator": "Bitmain"},
-    {"name": "F2Pool", "share": 12.1, "headquarters": "China", "operator": "Chun Wang"},
-    {"name": "ViaBTC", "share": 11.8, "headquarters": "China", "operator": "Haipo Yang"},
-    {"name": "Binance Pool", "share": 8.4, "headquarters": "Malta/Global", "operator": "Binance"},
-    {"name": "MaraPool", "share": 4.5, "headquarters": "United States", "operator": "Marathon Digital Holdings"},
-    {"name": "Others", "share": 7.5, "headquarters": "Global", "operator": "Decentralized independent nodes"}
-]
 
 import urllib.request
 
