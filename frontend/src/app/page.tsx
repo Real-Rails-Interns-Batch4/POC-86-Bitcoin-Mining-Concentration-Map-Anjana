@@ -453,7 +453,9 @@ export default function Dashboard() {
                   onClick={() => {
                     const nextShow = !showForecast;
                     setShowForecast(nextShow);
-                    if (!nextShow && replayYear > 2026) {
+                    if (nextShow) {
+                      setReplayYear(2028);
+                    } else if (replayYear > 2026) {
                       setReplayYear(2026);
                     }
                   }}
