@@ -26,7 +26,9 @@ import {
   BarChart,
   Bar,
   Cell,
-  Legend
+  Legend,
+  ReferenceLine,
+  ReferenceArea
 } from "recharts";
 
 // Dynamically import map component to disable SSR errors
@@ -48,7 +50,15 @@ const MOCK_SUMMARY = {
   avg_renewable_percentage: 54.8,
   top_country: "United States (42.1%)",
   active_hubs_tracked: 8,
-  last_updated: "June 2026"
+  last_updated: "June 2026",
+  geopolitical_entropy: {
+    entropy_value: 2.184,
+    max_entropy: 2.585,
+    decentralization_index: 84.5,
+    risk_level: "High Decentralization (Low Risk)",
+    direction: "decreasing",
+    direction_arrow: "↘"
+  }
 };
 
 const MOCK_MINING_HUBS = [
@@ -181,7 +191,9 @@ const MOCK_HISTORICAL = [
   {"year": 2023, "United States": 39.5, "China": 14.2, "Kazakhstan": 9.8, "Russia": 7.5, "Canada": 5.8, "Others": 23.2},
   {"year": 2024, "United States": 40.1, "China": 16.5, "Kazakhstan": 8.2, "Russia": 7.1, "Canada": 5.4, "Others": 22.7},
   {"year": 2025, "United States": 41.5, "China": 18.0, "Kazakhstan": 7.5, "Russia": 6.8, "Canada": 5.0, "Others": 21.2},
-  {"year": 2026, "United States": 42.1, "China": 19.5, "Kazakhstan": 6.9, "Russia": 6.5, "Canada": 4.8, "Others": 20.2}
+  {"year": 2026, "United States": 42.1, "China": 19.5, "Kazakhstan": 6.9, "Russia": 6.5, "Canada": 4.8, "Others": 20.2},
+  {"year": 2027, "is_forecast": true, "United States": 54.1, "China": 0.0, "Kazakhstan": 11.1, "Russia": 7.8, "Canada": 5.8, "Others": 21.3},
+  {"year": 2028, "is_forecast": true, "United States": 56.3, "China": 0.0, "Kazakhstan": 10.7, "Russia": 7.3, "Canada": 5.6, "Others": 20.1}
 ];
 
 const MOCK_POOLS = [
@@ -200,11 +212,12 @@ export default function Dashboard() {
   const [isPending, startTransition] = useTransition();
 
   // Core API State
-  const [summary, setSummary] = useState(MOCK_SUMMARY);
+  const [summary, setSummary] = useState<any>(MOCK_SUMMARY);
   const [hubs, setHubs] = useState(MOCK_MINING_HUBS);
   const [historical, setHistorical] = useState(MOCK_HISTORICAL);
   const [pools, setPools] = useState(MOCK_POOLS);
   const [isUsingMock, setIsUsingMock] = useState(false);
+  const [showForecast, setShowForecast] = useState(false);
 
   // Interaction State
   const [selectedHub, setSelectedHub] = useState<any>(null);
@@ -268,7 +281,8 @@ export default function Dashboard() {
     if (isReplaying) {
       timerRef.current = setInterval(() => {
         setReplayYear((prevYear) => {
-          if (prevYear >= 2026) return 2020;
+          const maxYear = showForecast ? 2028 : 2026;
+          if (prevYear >= maxYear) return 2020;
           return prevYear + 1;
         });
       }, 1500);
@@ -281,7 +295,7 @@ export default function Dashboard() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isReplaying]);
+  }, [isReplaying, showForecast]);
 
   // Apply interactive filters
   const filteredHubs = hubs.filter((hub) => {
@@ -360,6 +374,52 @@ export default function Dashboard() {
               <span className="text-[10px] text-gray-400 uppercase block font-mono">AVG RENEWABLE %</span>
               <span className="text-sm font-bold text-emerald-400">{summary.avg_renewable_percentage}%</span>
             </div>
+            <div className="text-right group relative cursor-help">
+              <span className="text-[10px] text-gray-400 uppercase block font-mono">GEOPOLITICAL DECENTRALIZATION</span>
+              <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border uppercase flex items-center gap-0.5 ${
+                  (summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).direction === "increasing"
+                    ? "text-emerald-400 border-emerald-500/30 bg-emerald-950/20"
+                    : (summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).direction === "decreasing"
+                    ? "text-rose-400 border-rose-500/30 bg-rose-950/20"
+                    : "text-gray-400 border-gray-500/30 bg-gray-950/20"
+                }`}>
+                  <span className="text-[10px]">{(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).direction_arrow}</span>
+                  {(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).direction}
+                </span>
+                <span className="text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-colors duration-200 shadow-[0_0_10px_rgba(129,140,248,0.2)] px-1.5 py-0.5 rounded border border-indigo-500/20 bg-indigo-950/10">
+                  {(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).decentralization_index}% <span className="text-[10px] text-gray-400 font-normal">({(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).entropy_value} H)</span>
+                </span>
+              </div>
+              {/* Tooltip */}
+              <div className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-64 p-3 bg-[#0b1117] border border-indigo-500/30 rounded-md shadow-2xl text-left backdrop-blur-md">
+                <p className="text-[11px] font-mono text-cyan-400 mb-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping inline-block" />
+                  GEOPOLITICAL ENTROPY METRICS
+                </p>
+                <div className="text-[10px] text-gray-300 space-y-1.5">
+                  <div className="flex justify-between">
+                    <span>Shannon Entropy (H):</span>
+                    <span className="text-white font-mono font-bold">{(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).entropy_value} / {(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).max_entropy}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Risk Profile:</span>
+                    <span className={`font-semibold ${(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).risk_level.includes("Low Risk") ? "text-emerald-400" : "text-amber-400"}`}>
+                      {(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).risk_level}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Decentralization Trend:</span>
+                    <span className={`font-bold capitalize ${(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).direction === "increasing" ? "text-emerald-400" : "text-rose-400"}`}>
+                      {(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).direction_arrow} {(summary.geopolitical_entropy || MOCK_SUMMARY.geopolitical_entropy).direction}
+                    </span>
+                  </div>
+                  <p className="text-[9px] text-gray-400 border-t border-gray-800 pt-1 leading-relaxed">
+                    Measures hashrate dispersion using Shannon's Entropy. A higher index indicates the network hashrate is spread across more jurisdictions, lowering geopolitical risk.
+                  </p>
+                </div>
+              </div>
+            </div>
             <div className="text-right">
               <span className="text-[10px] text-gray-400 uppercase block font-mono">SOURCE CONNECTIVITY</span>
               <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${isUsingMock ? "text-amber-400 border-amber-400/40 bg-amber-950/20" : "text-emerald-400 border-emerald-400/40 bg-emerald-950/20"}`}>
@@ -390,6 +450,23 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center gap-2">
                 <button 
+                  onClick={() => {
+                    const nextShow = !showForecast;
+                    setShowForecast(nextShow);
+                    if (!nextShow && replayYear > 2026) {
+                      setReplayYear(2026);
+                    }
+                  }}
+                  className={`px-2 py-0.5 rounded text-[9px] font-mono transition duration-200 border ${
+                    showForecast 
+                      ? "bg-cyan-950/40 border-cyan-400 text-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.2)]" 
+                      : "bg-gray-900/60 border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600"
+                  }`}
+                  title="Toggle 2027-2028 projections (Holt's Linear Model)"
+                >
+                  Projections
+                </button>
+                <button 
                   onClick={() => setIsReplaying(!isReplaying)}
                   className="p-1 rounded bg-cyan-900/30 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 transition"
                   title={isReplaying ? "Pause Replay" : "Play Replay Over Time"}
@@ -397,7 +474,7 @@ export default function Dashboard() {
                   {isReplaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                 </button>
                 <button 
-                  onClick={() => { setIsReplaying(false); setReplayYear(2026); }}
+                  onClick={() => { setIsReplaying(false); setReplayYear(showForecast ? 2028 : 2026); }}
                   className="p-1 rounded bg-gray-900/50 hover:bg-gray-800 border border-gray-700 text-gray-400 transition"
                   title="Reset to Current"
                 >
@@ -412,7 +489,7 @@ export default function Dashboard() {
               <input
                 type="range"
                 min="2020"
-                max="2026"
+                max={showForecast ? "2028" : "2026"}
                 value={replayYear}
                 onChange={(e) => {
                   setIsReplaying(false);
@@ -426,17 +503,23 @@ export default function Dashboard() {
             {/* Recharts Area Chart */}
             <div className="flex-1 w-full text-[9px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={historical.filter(h => h.year <= replayYear)}>
+                <AreaChart data={historical.filter(h => h.year <= replayYear && (showForecast || !(h as any).is_forecast))}>
                   <XAxis dataKey="year" stroke="#4b5563" />
                   <YAxis stroke="#4b5563" />
                   <ChartTooltip 
                     contentStyle={{ backgroundColor: "#0b1117", borderColor: "#1f2937", color: "#f3f4f6" }}
                   />
                   <Legend iconSize={8} wrapperStyle={{ fontSize: '9px', marginTop: '-5px' }} />
-                  <Area type="monotone" dataKey="United States" stroke="#38bdf8" fill="#38bdf8" fillOpacity={0.1} stackId="1" />
-                  <Area type="monotone" dataKey="China" stroke="#ef4444" fill="#ef4444" fillOpacity={0.1} stackId="1" />
-                  <Area type="monotone" dataKey="Kazakhstan" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.1} stackId="1" />
-                  <Area type="monotone" dataKey="Russia" stroke="#818cf8" fill="#818cf8" fillOpacity={0.1} stackId="1" />
+                  {showForecast && (
+                    <ReferenceArea x1={2026} x2={2028} stroke="#818cf8" strokeDasharray="3 3" strokeOpacity={0.4} fill="#818cf8" fillOpacity={0.03} />
+                  )}
+                  {showForecast && (
+                    <ReferenceLine x={2026} stroke="#818cf8" strokeDasharray="3 3" label={{ value: 'PROJECTION ZONE', fill: '#818cf8', fontSize: 8, position: 'top', dy: -5 }} />
+                  )}
+                  <Area type="monotone" dataKey="United States" stroke="#38bdf8" fill="#38bdf8" fillOpacity={0.1} stackId="1" strokeDasharray={showForecast ? "4 4" : undefined} />
+                  <Area type="monotone" dataKey="China" stroke="#ef4444" fill="#ef4444" fillOpacity={0.1} stackId="1" strokeDasharray={showForecast ? "4 4" : undefined} />
+                  <Area type="monotone" dataKey="Kazakhstan" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.1} stackId="1" strokeDasharray={showForecast ? "4 4" : undefined} />
+                  <Area type="monotone" dataKey="Russia" stroke="#818cf8" fill="#818cf8" fillOpacity={0.1} stackId="1" strokeDasharray={showForecast ? "4 4" : undefined} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

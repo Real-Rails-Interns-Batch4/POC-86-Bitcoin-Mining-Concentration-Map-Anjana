@@ -42,3 +42,34 @@ The layout, visual colors, and functional elements were verified on the local de
 - **Interactions**: Map tooltips, timeline play/pause controls, and country/energy/status filters work without page refreshes.
 - **Download telemetry**: Download button successfully outputs CSV files.
 - **API Status**: Top right HUD correctly logs connection state: `ONLINE (API)` when backend is active, and switches to `OFFLINE (LOCAL MOCK)` if offline.
+
+---
+
+## 🚀 Predictive Mining Migration & Geopolitical Entropy Upgrades
+
+We have enriched the dashboard with advanced predictive modelling and geopolitical concentration metrics:
+
+### 1. Backend Mathematical Calculations
+* **Shannon Entropy ($H = -\sum p_i \log_2 p_i$):** Computes hashrate dispersion across political jurisdictions. Higher entropy indicates increased geographic decentralization (lower concentration risk).
+* **Decentralization Trend Indicators:** Dynamically compares the current year's entropy to the previous year to output trend directions (`↗ increasing` / `↘ decreasing` / `→ stable`).
+* **Double Exponential Smoothing (Holt's Linear Trend Model):** Forecasts country shares for the projection years **2027 and 2028**. The forecasted values are clamped to $\ge 0.0$ and normalized so that the total sum of all country shares equals $100\%$ for each year.
+
+### 2. Frontend Interface Enhancements
+* **Premium HUD scorecard:** Placed next to the global hashrate metric, showing the calculated decentralization index percentage, current raw entropy score $(H)$, and a colored trend pill badge representing the direction of decentralization.
+* **Projections Toggle:** Adds a "Projections" control in the timeline card. When active, it updates the timeline slider bounds up to **2028** and converts the AreaChart's stacked lines to dashed outlines (`strokeDasharray="4 4"`) inside the projection zone.
+
+---
+
+## 🧪 Visual Verification (Upgrades)
+
+The new feature additions were validated on the live build:
+
+1. **Decentralization HUD Metric & Tooltip:**
+   ![Decentralization Index Card](./dashboard_init_1782897713241.png)
+
+2. **Dashed Projections Active (2027-2028):**
+   ![Timeline Projections Active](./projections_active_1782898620613.png)
+
+3. **Interactive UI Walkthrough Video:**
+   ![UI Feature Walkthrough](./dashboard_final_check_1782898568764.webp)
+
